@@ -340,10 +340,20 @@ class EcoMetricsExporter
         return result;
     }
 
-    // Known false-positive names found in the binary user data
-    static readonly HashSet<string> SkippedNames = new(StringComparer.Ordinal)
+    // Known false-positive strings found in the binary user data before the real Name property.
+    // These come from serialized game objects (Markers, Inventory) that appear earlier
+    // in the alphabetical property order than "Name" (position 24 of 57).
+    // Source: MarkerFolderName enum (localized), inventory item tags/attributes.
+    static readonly HashSet<string> SkippedNames = new(StringComparer.OrdinalIgnoreCase)
     {
+        // MarkerFolderName enum values (localized CamelCase → split words)
         "World Objects",
+        "Work Orders",
+        "Contracts",
+        "Tutorials",
+        "None",
+        // Inventory item attributes/tags
+        "crops",
     };
 
     static string? FindNameInData(byte[] data)
@@ -393,10 +403,18 @@ class EcoMetricsExporter
 
     static bool IsPlausiblePlayerName(string name)
     {
-        // Filter: must be printable, no control chars
+        // Must be printable ASCII only (letters, digits, spaces, common punctuation).
+        // Rejects non-ASCII bytes that decode as garbled UTF-8 characters.
         foreach (char c in name)
-            if (char.IsControl(c)) return false;
-        return true;
+        {
+            if (c < 0x20 || c > 0x7E) return false;
+        }
+        // Must contain at least one letter or digit (rejects pure punctuation)
+        foreach (char c in name)
+        {
+            if (char.IsLetterOrDigit(c)) return true;
+        }
+        return false;
     }
 
     static int FindBytes(byte[] haystack, byte[] needle, int start)

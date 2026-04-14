@@ -64,6 +64,18 @@ class EcoMetricsExporter
         "eco_dig_or_mine",
         "eco_chop_tree",
         "eco_plant_seeds",
+        "eco_currency_trade",
+    };
+
+    // Currency id → currency name, extracted from Game.eco transaction tooltips
+    static readonly Dictionary<int, string> CurrencyNames = new();
+
+    // Eco.Shared.Items.BoughtOrSold enum values (from Game.db's `enums` collection)
+    //   32 = Buying, 33 = Selling
+    static readonly Dictionary<int, string> BoughtOrSoldLabels = new()
+    {
+        { 32, "Buying" },
+        { 33, "Selling" },
     };
 
     // State file path (derived from DbPath, saved next to the database)
@@ -101,6 +113,7 @@ class EcoMetricsExporter
 
         LoadLongNames();
         LoadCitizenNames();
+        LoadCurrencyNames();
         LoadState();
 
         Console.WriteLine("Initial data load...");
@@ -184,6 +197,98 @@ class EcoMetricsExporter
         catch (Exception ex)
         {
             Console.Error.WriteLine("Warning: Could not read Game.eco: " + ex.Message);
+        }
+    }
+
+    // Currency names are not stored as a clean registrar in Game.eco — but every
+    // in-game transaction tooltip embeds the name in a predictable format:
+    //   <link="view:<classId>:<currencyId>"><icon name="CurrencySymbol"...>
+    //     <style="Currency...">0.5 Jorimoni Credit</style></icon></link>
+    // The amount varies but the currency name after it is stable. We regex over
+    // the whole EconomyManager/Data blob and take the most common name per id.
+    static readonly System.Text.RegularExpressions.Regex CurrencyTooltipRegex =
+        new(@"<link=""view:\d+:(\d+)""><icon name=""CurrencySymbol""[^>]*><style=""Currency[^""]*"">([-\d.,]+)\s+([^<]+)</style>",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    static void LoadCurrencyNames()
+    {
+        if (!File.Exists(EcoSavePath))
+        {
+            Console.WriteLine("No Game.eco found, currency IDs will be used as-is.");
+            return;
+        }
+        RefreshCurrencyNames();
+    }
+
+    static void RefreshCurrencyNames()
+    {
+        if (!File.Exists(EcoSavePath)) return;
+        try
+        {
+            var newMap = ExtractCurrencyNamesFromSave(EcoSavePath);
+            if (newMap.Count == 0) return;
+
+            int added = 0;
+            lock (MetricsLock)
+            {
+                foreach (var kv in newMap)
+                {
+                    if (!CurrencyNames.ContainsKey(kv.Key)) added++;
+                    CurrencyNames[kv.Key] = kv.Value;
+                }
+            }
+            Console.WriteLine("Loaded " + CurrencyNames.Count + " currency names from Game.eco" +
+                (added > 0 ? " (" + added + " new)" : ""));
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine("Warning: Could not extract currency names: " + ex.Message);
+        }
+    }
+
+    static Dictionary<int, string> ExtractCurrencyNamesFromSave(string ecoPath)
+    {
+        var result = new Dictionary<int, string>();
+        using var zip = ZipFile.OpenRead(ecoPath);
+        var entry = zip.GetEntry("EconomyManager/Data");
+        if (entry == null) return result;
+
+        using var s = entry.Open();
+        using var ms = new MemoryStream();
+        s.CopyTo(ms);
+        var data = ms.ToArray();
+
+        // Use Latin1 so the regex can scan the raw bytes as 1-char-per-byte text
+        // without tripping over binary (non-UTF-8) regions of the file.
+        var text = Encoding.Latin1.GetString(data);
+
+        // Tally each (id, name) pair; pick the most common name per id.
+        var tallies = new Dictionary<int, Dictionary<string, int>>();
+        foreach (System.Text.RegularExpressions.Match m in CurrencyTooltipRegex.Matches(text))
+        {
+            if (!int.TryParse(m.Groups[1].Value, out var id)) continue;
+            var name = m.Groups[3].Value.Trim();
+            if (string.IsNullOrEmpty(name) || name.Length > 40) continue;
+
+            if (!tallies.TryGetValue(id, out var inner))
+                tallies[id] = inner = new Dictionary<string, int>();
+            inner.TryGetValue(name, out var c);
+            inner[name] = c + 1;
+        }
+
+        foreach (var kv in tallies)
+        {
+            var best = kv.Value.OrderByDescending(x => x.Value).First();
+            result[kv.Key] = best.Key;
+        }
+        return result;
+    }
+
+    static string ResolveCurrencyName(int id)
+    {
+        lock (MetricsLock)
+        {
+            return CurrencyNames.TryGetValue(id, out var n) ? n : "id_" + id;
         }
     }
 
@@ -622,6 +727,7 @@ class EcoMetricsExporter
                         {
                             // For events, accumulate count into a running counter per label set
                             var includeCitizen = CitizenLabeledMetrics.Contains(metricName);
+                            var isCurrencyTrade = metricName == "eco_currency_trade";
 
                             foreach (var doc in newDocs)
                             {
@@ -637,6 +743,24 @@ class EcoMetricsExporter
                                     var citizenName = ResolveCitizenName(citizenId);
                                     labels.Add("citizen=\"" + EscapeLabelValue(citizenId) + "\"");
                                     labels.Add("citizen_name=\"" + EscapeLabelValue(citizenName) + "\"");
+                                }
+
+                                // Currency trades: promote a couple of Int32 ID fields to
+                                // meaningful string labels (BoughtOrSold enum, Currency name).
+                                if (isCurrencyTrade)
+                                {
+                                    if (doc.ContainsKey("BoughtOrSold"))
+                                    {
+                                        var bosInt = doc["BoughtOrSold"].AsInt32;
+                                        var bosLabel = BoughtOrSoldLabels.TryGetValue(bosInt, out var b)
+                                            ? b : "unknown_" + bosInt;
+                                        labels.Add("bought_or_sold=\"" + bosLabel + "\"");
+                                    }
+                                    if (doc.ContainsKey("Currency"))
+                                    {
+                                        var currencyId = doc["Currency"].AsInt32;
+                                        labels.Add("currency=\"" + EscapeLabelValue(ResolveCurrencyName(currencyId)) + "\"");
+                                    }
                                 }
 
                                 foreach (var key in doc.Keys)
@@ -665,6 +789,28 @@ class EcoMetricsExporter
                                         CounterMetrics[seriesKey] = (existing.Value + count, gameTime * 1000);
                                     else
                                         CounterMetrics[seriesKey] = (count, gameTime * 1000);
+
+                                    // Currency trades get two extra counters: sum of items moved
+                                    // and sum of currency moved, keyed by the same label set.
+                                    if (isCurrencyTrade)
+                                    {
+                                        var itemsDelta = doc.ContainsKey("NumberOfItems")
+                                            ? GetNumericValue(doc["NumberOfItems"]) : 0;
+                                        var currencyDelta = doc.ContainsKey("CurrencyAmount")
+                                            ? GetNumericValue(doc["CurrencyAmount"]) : 0;
+
+                                        var itemsKey = metricName + "_items_total" + labelStr;
+                                        if (CounterMetrics.TryGetValue(itemsKey, out var iex))
+                                            CounterMetrics[itemsKey] = (iex.Value + itemsDelta, gameTime * 1000);
+                                        else
+                                            CounterMetrics[itemsKey] = (itemsDelta, gameTime * 1000);
+
+                                        var currencyKey = metricName + "_currency_total" + labelStr;
+                                        if (CounterMetrics.TryGetValue(currencyKey, out var cex))
+                                            CounterMetrics[currencyKey] = (cex.Value + currencyDelta, gameTime * 1000);
+                                        else
+                                            CounterMetrics[currencyKey] = (currencyDelta, gameTime * 1000);
+                                    }
                                 }
                             }
 
@@ -746,7 +892,10 @@ class EcoMetricsExporter
             // to pick up new players
             PollCount++;
             if (PollCount % 10 == 0)
+            {
                 RefreshCitizenNames();
+                RefreshCurrencyNames();
+            }
         }
     }
 

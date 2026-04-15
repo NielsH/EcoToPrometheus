@@ -78,6 +78,15 @@ class EcoMetricsExporter
         { 33, "Selling" },
     };
 
+    // HELP text emitted in the /metrics output. Keys are the metric family
+    // name (the part before any '{labels}'). Missing entries just skip HELP/TYPE.
+    static readonly Dictionary<string, string> MetricHelp = new()
+    {
+        ["eco_currency_trade_total"]          = "Number of trade transactions",
+        ["eco_currency_trade_items_total"]    = "Total items exchanged across trade transactions",
+        ["eco_currency_trade_currency_total"] = "Total currency exchanged across trade transactions",
+    };
+
     // State file path (derived from DbPath, saved next to the database)
     static string StatePath = "";
 
@@ -863,6 +872,14 @@ class EcoMetricsExporter
         return val.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n");
     }
 
+    // Extract the metric family name (everything before '{') from a series key.
+    // e.g. "eco_currency_trade_total{bought_or_sold=\"Selling\",...}" -> "eco_currency_trade_total"
+    static string ExtractMetricFamily(string seriesKey)
+    {
+        int idx = seriesKey.IndexOf('{');
+        return idx >= 0 ? seriesKey.Substring(0, idx) : seriesKey;
+    }
+
     static bool IsCoordinateValue(string val)
     {
         // Matches patterns like "2562,63,1456" or "(2562, 63, 1456)" — XYZ world coordinates
@@ -963,14 +980,36 @@ class EcoMetricsExporter
             var sb = new StringBuilder();
 
             // Gauge metrics (timeseries + citizen stats)
+            string? currentFamily = null;
             foreach (var kv in GaugeMetrics.OrderBy(x => x.Key))
             {
+                var family = ExtractMetricFamily(kv.Key);
+                if (family != currentFamily)
+                {
+                    if (MetricHelp.TryGetValue(family, out var help))
+                    {
+                        sb.AppendLine("# HELP " + family + " " + help);
+                        sb.AppendLine("# TYPE " + family + " gauge");
+                    }
+                    currentFamily = family;
+                }
                 sb.AppendLine(kv.Key + " " + FormatDouble(kv.Value.Value) + " " + kv.Value.TimestampMs);
             }
 
             // Counter metrics (events)
+            currentFamily = null;
             foreach (var kv in CounterMetrics.OrderBy(x => x.Key))
             {
+                var family = ExtractMetricFamily(kv.Key);
+                if (family != currentFamily)
+                {
+                    if (MetricHelp.TryGetValue(family, out var help))
+                    {
+                        sb.AppendLine("# HELP " + family + " " + help);
+                        sb.AppendLine("# TYPE " + family + " counter");
+                    }
+                    currentFamily = family;
+                }
                 sb.AppendLine(kv.Key + " " + FormatDouble(kv.Value.Value) + " " + kv.Value.TimestampMs);
             }
 

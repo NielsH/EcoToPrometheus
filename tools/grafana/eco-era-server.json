@@ -1491,7 +1491,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (reason) ((eco_money_transferred_total{job=\"factoreco\"} - eco_money_transferred_total{job=\"factoreco\"} offset $__interval)), 0)",
+          "expr": "clamp_min(sum by (reason) ((eco_money_transferred_total{job=\"factoreco\"} - (eco_money_transferred_total{job=\"factoreco\"} offset $__interval or min_over_time(eco_money_transferred_total{job=\"factoreco\"}[$__interval])))), 0)",
           "instant": false,
           "legendFormat": "{{reason}}",
           "range": true,
@@ -1559,7 +1559,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (settlement) ((eco_tax_paid_total{job=\"factoreco\"} - eco_tax_paid_total{job=\"factoreco\"} offset $__interval)), 0)",
+          "expr": "clamp_min(sum by (settlement) ((eco_tax_paid_total{job=\"factoreco\"} - (eco_tax_paid_total{job=\"factoreco\"} offset $__interval or min_over_time(eco_tax_paid_total{job=\"factoreco\"}[$__interval])))), 0)",
           "instant": false,
           "legendFormat": "tax {{settlement}}",
           "range": true,
@@ -1570,7 +1570,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (settlement) ((eco_wages_paid_total{job=\"factoreco\"} - eco_wages_paid_total{job=\"factoreco\"} offset $__interval)), 0)",
+          "expr": "clamp_min(sum by (settlement) ((eco_wages_paid_total{job=\"factoreco\"} - (eco_wages_paid_total{job=\"factoreco\"} offset $__interval or min_over_time(eco_wages_paid_total{job=\"factoreco\"}[$__interval])))), 0)",
           "instant": false,
           "legendFormat": "wages {{settlement}}",
           "range": true,
@@ -1581,7 +1581,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (op) ((eco_rent_paid_total{job=\"factoreco\"} - eco_rent_paid_total{job=\"factoreco\"} offset $__interval)), 0)",
+          "expr": "clamp_min(sum by (op) ((eco_rent_paid_total{job=\"factoreco\"} - (eco_rent_paid_total{job=\"factoreco\"} offset $__interval or min_over_time(eco_rent_paid_total{job=\"factoreco\"}[$__interval])))), 0)",
           "instant": false,
           "legendFormat": "{{op}}",
           "range": true,
@@ -2294,7 +2294,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (source) ((eco_pollution_emitted_ppm_total{job=\"factoreco\"} - eco_pollution_emitted_ppm_total{job=\"factoreco\"} offset $__interval)), 0)",
+          "expr": "clamp_min(sum by (source) ((eco_pollution_emitted_ppm_total{job=\"factoreco\"} - (eco_pollution_emitted_ppm_total{job=\"factoreco\"} offset $__interval or min_over_time(eco_pollution_emitted_ppm_total{job=\"factoreco\"}[$__interval])))), 0)",
           "instant": false,
           "legendFormat": "{{source}}",
           "range": true,
@@ -3035,7 +3035,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (specialty) (eco_action_gain_specialty_total{job=\"factoreco\"} - eco_action_gain_specialty_total{job=\"factoreco\"} offset 5m), 0))[$__range:5m]))",
+          "expr": "sort_desc(sum_over_time((clamp_min(sum by (specialty) (eco_action_gain_specialty_total{job=\"factoreco\"} - (eco_action_gain_specialty_total{job=\"factoreco\"} offset 5m or min_over_time(eco_action_gain_specialty_total{job=\"factoreco\"}[5m]))), 0))[$__range:5m]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{specialty}}",
@@ -3104,7 +3104,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_character_level_up_total{job=\"factoreco\"} - eco_action_character_level_up_total{job=\"factoreco\"} offset 5m), 0))[$__range:5m]))",
+          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_character_level_up_total{job=\"factoreco\"} - (eco_action_character_level_up_total{job=\"factoreco\"} offset 5m or min_over_time(eco_action_character_level_up_total{job=\"factoreco\"}[5m]))), 0))[$__range:5m]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -3173,7 +3173,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_playtime_seconds_total{job=\"factoreco\"} - eco_playtime_seconds_total{job=\"factoreco\"} offset 5m), 0))[$__range:5m]))",
+          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_playtime_seconds_total{job=\"factoreco\"} - (eco_playtime_seconds_total{job=\"factoreco\"} offset 5m or min_over_time(eco_playtime_seconds_total{job=\"factoreco\"}[5m]))), 0))[$__range:5m]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -3255,7 +3255,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "topk(20, sum_over_time((clamp_min(sum by (item) (eco_action_item_crafted_total{job=\"factoreco\"} - eco_action_item_crafted_total{job=\"factoreco\"} offset 5m), 0))[$__range:5m]))",
+          "expr": "topk(20, sum_over_time((clamp_min(sum by (item) (eco_action_item_crafted_total{job=\"factoreco\"} - (eco_action_item_crafted_total{job=\"factoreco\"} offset 5m or min_over_time(eco_action_item_crafted_total{job=\"factoreco\"}[5m]))), 0))[$__range:5m]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{item}}",
@@ -3324,7 +3324,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "topk(20, sum_over_time((clamp_min(sum by (food) (eco_food_eaten_total{job=\"factoreco\"} - eco_food_eaten_total{job=\"factoreco\"} offset 5m), 0))[$__range:5m]))",
+          "expr": "topk(20, sum_over_time((clamp_min(sum by (food) (eco_food_eaten_total{job=\"factoreco\"} - (eco_food_eaten_total{job=\"factoreco\"} offset 5m or min_over_time(eco_food_eaten_total{job=\"factoreco\"}[5m]))), 0))[$__range:5m]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{food}}",
@@ -3393,7 +3393,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "topk(20, sum_over_time((clamp_min(sum by (block) (eco_action_construct_or_deconstruct_total{job=\"factoreco\",op=\"Constructed\"} - eco_action_construct_or_deconstruct_total{job=\"factoreco\",op=\"Constructed\"} offset 5m), 0))[$__range:5m]))",
+          "expr": "topk(20, sum_over_time((clamp_min(sum by (block) (eco_action_construct_or_deconstruct_total{job=\"factoreco\",op=\"Constructed\"} - (eco_action_construct_or_deconstruct_total{job=\"factoreco\",op=\"Constructed\"} offset 5m or min_over_time(eco_action_construct_or_deconstruct_total{job=\"factoreco\",op=\"Constructed\"}[5m]))), 0))[$__range:5m]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{block}}",
@@ -3409,7 +3409,7 @@
         "type": "prometheus",
         "uid": "cei0t2vzw2x34d"
       },
-      "description": "Every GameAction family. Use the legend to isolate one. Each bar is one graph interval (5 minutes or more); the legend Total is the count over the whole selected range.",
+      "description": "Every GameAction family. Use the legend to isolate one.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3417,12 +3417,12 @@
           },
           "custom": {
             "axisPlacement": "auto",
-            "drawStyle": "bars",
-            "fillOpacity": 80,
+            "drawStyle": "line",
+            "fillOpacity": 10,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "showPoints": "never",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "normal"
@@ -3439,16 +3439,15 @@
         "y": 105
       },
       "id": 57,
-      "interval": "5m",
       "options": {
         "legend": {
           "calcs": [
-            "sum"
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Total",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -3462,9 +3461,9 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (__name__) (({__name__=~\"eco_action_.*_total\", job=\"factoreco\"} - {__name__=~\"eco_action_.*_total\", job=\"factoreco\"} offset $__interval)), 0)",
+          "expr": "(sum by (action) (label_replace({__name__=~\"eco_action_.*_total\", job=\"factoreco\"}, \"action\", \"$1\", \"__name__\", \"eco_action_(.*)_total\")) - (sum by (action) (label_replace({__name__=~\"eco_action_.*_total\", job=\"factoreco\"} offset $__interval, \"action\", \"$1\", \"__name__\", \"eco_action_(.*)_total\")) or min_over_time((sum by (action) (label_replace({__name__=~\"eco_action_.*_total\", job=\"factoreco\"}, \"action\", \"$1\", \"__name__\", \"eco_action_(.*)_total\")))[$__interval:1m]))) > 0",
           "instant": false,
-          "legendFormat": "{{__name__}}",
+          "legendFormat": "{{action}}",
           "range": true,
           "refId": "A"
         }

@@ -94,6 +94,16 @@ namespace EcoToPrometheus.Hooks
             return increments.Length == 0 ? null : new EventRecord(increments, Environment.TickCount64);
         }
 
+        /// <summary>Every counter family this rule set (plus the food hook) can emit; used to prune stale series from the state file on load.</summary>
+        public HashSet<string> KnownCounterFamilies()
+        {
+            var known = new HashSet<string>(StringComparer.Ordinal) { FamilyRules.FoodEaten, FamilyRules.FoodCalories };
+            foreach (var rule in this.byType.Values)   known.Add(rule.Family);
+            foreach (var h in this.help)               if (h.Type == MetricType.Counter) known.Add(h.Family);
+            foreach (var h in FamilyRules.ValueHelp)   if (h.Type == MetricType.Counter) known.Add(h.Family);
+            return known;
+        }
+
         /// <summary>Registers HELP/TYPE for every count and value family. Worker thread only (the registry is not thread-safe).</summary>
         public void RegisterHelp(MetricRegistry registry)
         {

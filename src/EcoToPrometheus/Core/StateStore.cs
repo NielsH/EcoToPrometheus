@@ -127,6 +127,27 @@ namespace EcoToPrometheus.Core
             return target;
         }
 
+        /// <summary>
+        /// Drops every counter whose family <paramref name="isKnown"/> rejects, so series from renamed or removed metrics
+        /// do not linger across mod versions. Returns the distinct dropped family names, sorted, for the log.
+        /// </summary>
+        public static IReadOnlyList<string> PruneUnknownFamilies(StateFile state, Func<string, bool> isKnown)
+        {
+            var dropped = new SortedSet<string>(StringComparer.Ordinal);
+            var remove  = new List<string>();
+            foreach (var key in state.Counters.Keys)
+            {
+                string family;
+                try { family = SeriesKey.Parse(key).Family; }
+                catch (FormatException) { family = key; }
+                if (isKnown(family)) continue;
+                dropped.Add(family);
+                remove.Add(key);
+            }
+            foreach (var key in remove) state.Counters.Remove(key);
+            return new List<string>(dropped);
+        }
+
         static string Stamp(DateTime utc) => utc.ToString(StampFormat, CultureInfo.InvariantCulture);
 
         /// <summary>Appends <c>-2</c>, <c>-3</c>, ... before the extension when the candidate already exists (same-second collisions).</summary>

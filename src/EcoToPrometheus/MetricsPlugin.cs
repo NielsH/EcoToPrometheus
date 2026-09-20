@@ -339,6 +339,13 @@ namespace EcoToPrometheus
         DateTime      lastStateSaveUtc = DateTime.MinValue;
         volatile bool saveRequested;
 
+        /// <summary>Counter families written by the worker and the plugin itself, kept across versions by name.</summary>
+        static readonly string[] SelfCounterFamilies =
+        {
+            "eco_exporter_events_processed_total", "eco_exporter_handler_errors_total", "eco_exporter_events_filtered_total",
+            "eco_exporter_state_saves_total", "eco_exporter_scrapes_total",
+        };
+
         public string    StatePath        => this.statePath;
         public string    StateLoadReason  => this.stateLoadReason;
         public bool      StateLoadOk      => this.stateLoadOk;
@@ -381,6 +388,12 @@ namespace EcoToPrometheus
                     LogWarning($"[Metrics] state file is from a previous world (saved at world time {state.WorldSeconds:F0}s, world is now at {worldSeconds:F0}s); archived as {archived}, counters start at zero.");
                     return;
                 }
+
+                var known = this.Listener.Rules.KnownCounterFamilies();
+                known.UnionWith(SelfCounterFamilies);
+                var dropped = StateStore.PruneUnknownFamilies(state, known.Contains);
+                if (dropped.Count > 0)
+                    LogWarning($"[Metrics] dropped {dropped.Count} unknown counter families from the state file (renamed or removed metrics; gone from the next save): {string.Join(", ", dropped)}");
 
                 this.Registry.ImportCounters(state.Counters);
                 this.stateLoadReason  = "ok";

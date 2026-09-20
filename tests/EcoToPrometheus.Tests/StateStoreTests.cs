@@ -195,5 +195,24 @@ namespace EcoToPrometheus.Tests
             StateStore.Load(path, out var result, out _);
             return result;
         }
+
+        [Fact]
+        public void PruneUnknownFamilies_drops_only_unknown_and_reports_them_sorted()
+        {
+            var state = new StateFile();
+            state.Counters["eco_action_chop_tree_total|player=Ann|species=Oak"] = 5;
+            state.Counters["eco_action_chop_tree_total|player=Bob|species=Oak"] = 7;
+            state.Counters["eco_old_renamed_total|player=Ann"]                 = 3;
+            state.Counters["eco_gone_total"]                                    = 1;
+            state.Counters["eco_exporter_events_processed_total"]               = 42;
+            var known = new HashSet<string> { "eco_action_chop_tree_total", "eco_exporter_events_processed_total" };
+
+            var dropped = StateStore.PruneUnknownFamilies(state, known.Contains);
+
+            Assert.Equal(new[] { "eco_gone_total", "eco_old_renamed_total" }, dropped);
+            Assert.Equal(3, state.Counters.Count);
+            Assert.Equal(5, state.Counters["eco_action_chop_tree_total|player=Ann|species=Oak"]);
+            Assert.Equal(42, state.Counters["eco_exporter_events_processed_total"]);
+        }
     }
 }

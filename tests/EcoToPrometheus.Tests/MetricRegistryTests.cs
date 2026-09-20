@@ -192,5 +192,60 @@ namespace EcoToPrometheus.Tests
             r.RegisterFamily("empty", MetricType.Gauge, "nothing yet");
             Assert.Empty(r.Publish(Now).Families);
         }
+
+        [Fact]
+        public void NewCounterSeries_IsExposedAtZero_UntilAScrapeHasSeenIt()
+        {
+            var r = new MetricRegistry();
+            var t0 = new DateTime(2026, 9, 20, 12, 0, 0, DateTimeKind.Utc);
+            r.IncrementCounter("eco_x_total", new[] { new Label("a", "1") }, 3, t0);
+
+            // Nothing scraped yet: the series is visible at 0 and the increment is pending.
+            r.SettleBirths(scrapesNow: 10, t0);
+            var snap = r.Publish(t0, scrapesNow: 10);
+            Assert.Equal(0, snap.Families.Single().Series.Single().Value);
+            Assert.Equal(1, r.PendingBirths);
+
+            // Another increment while still pending accumulates; the scrape count has not moved: still 0.
+            r.IncrementCounter("eco_x_total", new[] { new Label("a", "1") }, 2, t0.AddSeconds(1));
+            r.SettleBirths(10, t0.AddSeconds(1));
+            Assert.Equal(0, r.Publish(t0.AddSeconds(1), 10).Families.Single().Series.Single().Value);
+
+            // One scrape served the 0: the pending 5 is applied.
+            r.SettleBirths(11, t0.AddSeconds(2));
+            Assert.Equal(5, r.Publish(t0.AddSeconds(2), 11).Families.Single().Series.Single().Value);
+            Assert.Equal(0, r.PendingBirths);
+
+            // Later increments apply directly.
+            r.IncrementCounter("eco_x_total", new[] { new Label("a", "1") }, 1, t0.AddSeconds(3));
+            Assert.Equal(6, r.Publish(t0.AddSeconds(3), 11).Families.Single().Series.Single().Value);
+        }
+
+        [Fact]
+        public void NewCounterSeries_SettlesAfterMaxBirthWait_WithoutAnyScrape()
+        {
+            var r = new MetricRegistry();
+            var t0 = DateTime.UtcNow;
+            r.IncrementCounter("eco_y_total", System.Array.Empty<Label>(), 4, t0);
+            r.Publish(t0, 0);
+            r.SettleBirths(0, t0 + MetricRegistry.MaxBirthWait - TimeSpan.FromSeconds(1));
+            Assert.Equal(1, r.PendingBirths);
+            r.SettleBirths(0, t0 + MetricRegistry.MaxBirthWait);
+            Assert.Equal(0, r.PendingBirths);
+            Assert.Equal(4, r.Publish(t0 + MetricRegistry.MaxBirthWait, 0).Families.Single().Series.Single().Value);
+        }
+
+        [Fact]
+        public void ExportCounters_IncludesPendingBirths_AndImportedSeriesAreNotBorn()
+        {
+            var r = new MetricRegistry();
+            r.IncrementCounter("eco_z_total", System.Array.Empty<Label>(), 7, DateTime.UtcNow);
+            Assert.Equal(7, r.ExportCounters().Single().Value);   // the file holds the truth even before settlement
+
+            var r2 = new MetricRegistry();
+            r2.ImportCounters(new[] { new System.Collections.Generic.KeyValuePair<string, double>("eco_z_total", 7) });
+            Assert.Equal(0, r2.PendingBirths);
+            Assert.Equal(7, r2.Publish(DateTime.UtcNow, 0).Families.Single().Series.Single().Value);
+        }
     }
 }

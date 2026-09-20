@@ -64,8 +64,18 @@ namespace EcoToPrometheus.Core
             public readonly string  Family;
             public readonly Label[] Labels;
             public double           Value;
+            // Birth handling: a new counter series is exposed at 0 until a scrape has seen that 0, then the pending
+            // increments are applied. Prometheus client libraries do the same; without it rate()/increase() never see
+            // the first increment of a series.
+            public double           Pending;
+            public bool             Born;             // true while the 0 has not been settled yet
+            public long             PublishedAtScrape = -1; // scrape count when the 0 first became visible
+            public DateTime         BornUtc;
             public Series(string family, Label[] labels, double value) { this.Family = family; this.Labels = labels; this.Value = value; }
         }
+
+        /// <summary>Longest a new series waits for a scrape before its pending increments are applied anyway.</summary>
+        public static readonly TimeSpan MaxBirthWait = TimeSpan.FromMinutes(5);
 
         readonly Dictionary<string, FamilyInfo> families = new(StringComparer.Ordinal);
         readonly Dictionary<string, Series>     counters = new(StringComparer.Ordinal);
@@ -94,17 +104,53 @@ namespace EcoToPrometheus.Core
 
         public bool TryGetFamily(string name, out FamilyInfo info) => this.families.TryGetValue(name, out info!);
 
-        /// <summary>Adds <paramref name="delta"/> to the series, creating it at <paramref name="delta"/> if new. Labels are copied and sorted.</summary>
-        public void IncrementCounter(string family, Label[] labels, double delta)
+        /// <summary>
+        /// Adds <paramref name="delta"/> to the series. A new series is created at 0 with the delta pending; see
+        /// <see cref="SettleBirths"/>. Labels are copied and sorted.
+        /// </summary>
+        public void IncrementCounter(string family, Label[] labels, double delta) => this.IncrementCounter(family, labels, delta, DateTime.UtcNow);
+
+        public void IncrementCounter(string family, Label[] labels, double delta, DateTime nowUtc)
         {
             var info = this.RegisterFamily(family, MetricType.Counter, string.Empty);
             if (info.Type != MetricType.Counter) throw new InvalidOperationException($"'{family}' is a gauge.");
             var sorted = Sorted(labels);
             var key = SeriesKey.Build(family, sorted);
-            if (this.counters.TryGetValue(key, out var s)) s.Value += delta;
-            else this.counters[key] = new Series(family, sorted, delta);
+            if (this.counters.TryGetValue(key, out var s))
+            {
+                if (s.Born) s.Pending += delta; else s.Value += delta;
+            }
+            else
+            {
+                this.counters[key] = new Series(family, sorted, 0) { Born = true, Pending = delta, BornUtc = nowUtc };
+            }
             this.dirty = true;
         }
+
+        /// <summary>
+        /// Applies pending increments of series whose 0 has been served by at least one scrape since it was published
+        /// (<paramref name="scrapesNow"/> greater than the count recorded at publish), or that have waited longer than
+        /// <see cref="MaxBirthWait"/>. Call once per worker tick, before <see cref="Publish"/>.
+        /// </summary>
+        public int SettleBirths(long scrapesNow, DateTime nowUtc)
+        {
+            var settled = 0;
+            foreach (var s in this.counters.Values)
+            {
+                if (!s.Born) continue;
+                var seen = s.PublishedAtScrape >= 0 && scrapesNow > s.PublishedAtScrape;
+                if (!seen && nowUtc - s.BornUtc < MaxBirthWait) continue;
+                s.Value  += s.Pending;
+                s.Pending = 0;
+                s.Born    = false;
+                settled++;
+            }
+            if (settled > 0) this.dirty = true;
+            return settled;
+        }
+
+        /// <summary>Series still exposed at 0 waiting for a scrape.</summary>
+        public int PendingBirths => this.counters.Values.Count(s => s.Born);
 
         public void SetGauge(string family, Label[] labels, double value)
         {
@@ -123,9 +169,24 @@ namespace EcoToPrometheus.Core
             if (keys.Count > 0) this.dirty = true;
         }
 
-        /// <summary>Rebuilds <see cref="Current"/> if anything changed since the last publish. Families and series come out sorted.</summary>
+        /// <summary>
+        /// Rebuilds <see cref="Current"/> if anything changed since the last publish. Families and series come out sorted.
+        /// This overload is for use without a scraper (tests, tools): newborn series are settled first, so values are exact.
+        /// </summary>
         public MetricsSnapshot Publish(DateTime nowUtc)
         {
+            this.SettleBirths(0, DateTime.MaxValue);
+            return this.Publish(nowUtc, 0);
+        }
+
+        /// <summary>
+        /// As <see cref="Publish(DateTime)"/>, and records <paramref name="scrapesNow"/> on every newborn series whose 0 is
+        /// now visible, so <see cref="SettleBirths"/> can tell when a later scrape has served it.
+        /// </summary>
+        public MetricsSnapshot Publish(DateTime nowUtc, long scrapesNow)
+        {
+            foreach (var s in this.counters.Values)
+                if (s.Born && s.PublishedAtScrape < 0) s.PublishedAtScrape = scrapesNow;
             if (!this.dirty) return this.current;
             var byFamily = new Dictionary<string, List<SeriesSnapshot>>(StringComparer.Ordinal);
             foreach (var s in this.counters.Values.Concat(this.gauges.Values))
@@ -145,9 +206,9 @@ namespace EcoToPrometheus.Core
             return this.current;
         }
 
-        /// <summary>Counter totals as series keys, for the state file.</summary>
+        /// <summary>Counter totals as series keys, for the state file. Pending births are included: the file holds the truth, the 0 is only for scrapes.</summary>
         public IEnumerable<KeyValuePair<string, double>> ExportCounters() =>
-            this.counters.Select(kv => new KeyValuePair<string, double>(kv.Key, kv.Value.Value));
+            this.counters.Select(kv => new KeyValuePair<string, double>(kv.Key, kv.Value.Value + kv.Value.Pending));
 
         /// <summary>Replaces counter totals from the state file. Families are registered as counters with empty help; hooks fill in help later.</summary>
         public void ImportCounters(IEnumerable<KeyValuePair<string, double>> entries)

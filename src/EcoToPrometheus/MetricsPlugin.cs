@@ -74,6 +74,7 @@ namespace EcoToPrometheus
                 QueueWarnThreshold  = this.Config.QueueWarnThreshold,
                 ModVersion          = typeof(MetricsPlugin).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
                 EcoVersion          = SafeEcoVersion(),
+                ScrapesServed       = () => this.ScrapesTotal,
             };
             this.resolver = new EcoNameResolver();
             this.Worker   = new MetricsWorker(this.Registry, this.resolver, options, LogWarning, LogError);

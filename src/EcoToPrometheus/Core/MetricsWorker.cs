@@ -12,6 +12,12 @@ namespace EcoToPrometheus.Core
         public int    QueueWarnThreshold  { get; set; } = 100_000;
         public string ModVersion          { get; set; } = "0.0.0";
         public string EcoVersion          { get; set; } = "unknown";
+
+        /// <summary>
+        /// Number of scrapes served so far, read by the worker to settle newborn series (see MetricRegistry.SettleBirths).
+        /// Null means "no scraper": births settle immediately, which keeps counters exact for the JSON view and for tests.
+        /// </summary>
+        public Func<long>? ScrapesServed { get; set; }
     }
 
     /// <summary>Point-in-time health data for the status endpoint and the chat command.</summary>
@@ -103,10 +109,15 @@ namespace EcoToPrometheus.Core
         public void Tick(DateTime nowUtc)
         {
             var sw = Stopwatch.StartNew();
+            var served  = this.options.ScrapesServed?.Invoke();
+            var scrapes = served ?? 0;
             this.Stage("worker", () => this.Drain());
             this.Stage("gauge",  () => this.SampleGauges(nowUtc));
             this.Stage("worker", () => this.WriteSelfMetrics(nowUtc));
-            this.Stage("worker", () => { this.registry.Publish(nowUtc); this.hasPublished = true; });
+            // Settle right before publishing so a series born anywhere in this tick is handled the same way.
+            // No scraper configured: settle newborn series at once (DateTime.MaxValue trips the birth timeout).
+            this.Stage("worker", () => this.registry.SettleBirths(scrapes, served.HasValue ? nowUtc : DateTime.MaxValue));
+            this.Stage("worker", () => { this.registry.Publish(nowUtc, scrapes); this.hasPublished = true; });
             sw.Stop();
             this.lastTickUtc = nowUtc;
             this.lastTickMs  = sw.Elapsed.TotalMilliseconds;
@@ -170,7 +181,7 @@ namespace EcoToPrometheus.Core
                         labels[inc.Labels.Length + i] = new Label(d.Name, this.Truncate(value));
                     }
                 }
-                this.registry.IncrementCounter(inc.Family, labels, inc.Delta);
+                this.registry.IncrementCounter(inc.Family, labels, inc.Delta, DateTime.UtcNow);
             }
         }
 
@@ -197,11 +208,13 @@ namespace EcoToPrometheus.Core
             r.RegisterFamily("eco_exporter_tick_duration_seconds",  MetricType.Gauge,   "Wall time of the previous worker tick.");
             r.RegisterFamily("eco_exporter_series",                 MetricType.Gauge,   "Series held in the registry.");
             r.RegisterFamily("eco_exporter_build_info",             MetricType.Gauge,   "Exporter version and Eco server version.");
+            r.RegisterFamily("eco_exporter_pending_births",         MetricType.Gauge,   "New counter series exposed at 0, waiting for a scrape before their first increment is applied.");
 
             r.SetGauge("eco_exporter_events_queued",    CounterIncrement.NoLabels, Volatile.Read(ref this.queued));
             r.SetGauge("eco_exporter_queue_high_water", CounterIncrement.NoLabels, Volatile.Read(ref this.highWater));
             r.SetGauge("eco_exporter_tick_duration_seconds", CounterIncrement.NoLabels, this.lastTickMs / 1000.0);
             r.SetGauge("eco_exporter_series", CounterIncrement.NoLabels, r.SeriesCount);
+            r.SetGauge("eco_exporter_pending_births", CounterIncrement.NoLabels, r.PendingBirths);
             r.SetGauge("eco_exporter_build_info", new[] { new Label("eco_version", this.options.EcoVersion), new Label("version", this.options.ModVersion) }, 1);
 
             // Counters are set absolutely from our own totals: the registry only has Increment, so track what was written.

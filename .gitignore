@@ -4,3 +4,4 @@ obj/
 *.metrics.json.*
 .vs/
 *.user
+.claude/worktrees/

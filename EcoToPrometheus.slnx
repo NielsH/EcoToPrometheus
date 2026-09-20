@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/EcoToPrometheus/EcoToPrometheus.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EcoToPrometheus.Tests/EcoToPrometheus.Tests.csproj" />
+  </Folder>
 </Solution>

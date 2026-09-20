@@ -46,13 +46,14 @@ namespace EcoToPrometheus.Core
 
         public static (string Family, Label[] Labels) Parse(string key)
         {
-            var parts = SplitUnescaped(key, '|');
-            var family = parts[0];
+            // The first split must keep the escapes so that an escaped '=' inside a value survives to the second split.
+            var parts = Split(key, '|', unescape: false);
+            var family = Unescape(parts[0]);
             if (parts.Count == 1) return (family, Array.Empty<Label>());
             var labels = new Label[parts.Count - 1];
             for (int i = 1; i < parts.Count; i++)
             {
-                var kv = SplitUnescaped(parts[i], '=');
+                var kv = Split(parts[i], '=', unescape: true);
                 if (kv.Count != 2) throw new FormatException($"Bad series key segment '{parts[i]}' in '{key}'.");
                 labels[i - 1] = new Label(kv[0], kv[1]);
             }
@@ -68,19 +69,37 @@ namespace EcoToPrometheus.Core
             }
         }
 
-        static List<string> SplitUnescaped(string s, char sep)
+        /// <summary>Splits on unescaped <paramref name="sep"/>; escape pairs are either resolved or copied through verbatim.</summary>
+        static List<string> Split(string s, char sep, bool unescape)
         {
             var result = new List<string>();
             var sb = new StringBuilder();
             for (int i = 0; i < s.Length; i++)
             {
                 var ch = s[i];
-                if (ch == '\\' && i + 1 < s.Length) { sb.Append(s[++i]); continue; }
+                if (ch == '\\' && i + 1 < s.Length)
+                {
+                    if (!unescape) sb.Append(ch);
+                    sb.Append(s[++i]);
+                    continue;
+                }
                 if (ch == sep) { result.Add(sb.ToString()); sb.Clear(); continue; }
                 sb.Append(ch);
             }
             result.Add(sb.ToString());
             return result;
+        }
+
+        static string Unescape(string s)
+        {
+            if (s.IndexOf('\\') < 0) return s;
+            var sb = new StringBuilder(s.Length);
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == '\\' && i + 1 < s.Length) i++;
+                sb.Append(s[i]);
+            }
+            return sb.ToString();
         }
     }
 }

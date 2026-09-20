@@ -99,6 +99,7 @@
             "mode": "palette-classic"
           },
           "decimals": 2,
+          "noValue": "none in range",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -372,6 +373,7 @@
             "mode": "palette-classic"
           },
           "decimals": 0,
+          "noValue": "none in range",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -441,6 +443,7 @@
             "mode": "palette-classic"
           },
           "decimals": 0,
+          "noValue": "none in range",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -510,6 +513,7 @@
             "mode": "palette-classic"
           },
           "decimals": 0,
+          "noValue": "none in range",
           "thresholds": {
             "mode": "absolute",
             "steps": [

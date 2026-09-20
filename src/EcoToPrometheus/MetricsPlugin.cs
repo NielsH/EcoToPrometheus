@@ -340,6 +340,9 @@ namespace EcoToPrometheus
         DateTime      lastStateSaveUtc = DateTime.MinValue;
         volatile bool saveRequested;
 
+        /// <summary>How far the world clock may be behind the last state save before the save is treated as belonging to a previous world.</summary>
+        public static readonly TimeSpan NewWorldRollbackTolerance = TimeSpan.FromHours(6);
+
         /// <summary>Counter families written by the worker and the plugin itself, kept across versions by name.</summary>
         static readonly string[] SelfCounterFamilies =
         {
@@ -381,8 +384,10 @@ namespace EcoToPrometheus
                         return;
                 }
 
+                // Eco reloads its last autosave on restart, so the world clock legitimately rolls back by up to the
+                // autosave interval. A regenerated world starts near zero, so only a rollback of hours means "new world".
                 var worldSeconds = WorldTime.Seconds;
-                if (state!.WorldSeconds > worldSeconds + 60)
+                if (state!.WorldSeconds > worldSeconds + NewWorldRollbackTolerance.TotalSeconds)
                 {
                     var archived = StateStore.ArchiveForNewWorld(this.statePath);
                     this.stateLoadReason = "new_world";

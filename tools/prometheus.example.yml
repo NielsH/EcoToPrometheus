@@ -1,0 +1,25 @@
+# Example scrape job for EcoToPrometheus v2 (Prometheus 3.x).
+#
+# The API key is Eco's APIAuthToken from the server's Configs/Users.eco. Prefer a secret file over
+# `params: { api_key: [...] }`, which would put the key into target URLs and logs.
+
+scrape_configs:
+  - job_name: eco
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /api/v1/plugins/Metrics/metrics
+    scheme: http
+    http_headers:
+      X-API-Key:
+        files: [/etc/prometheus/secrets/eco_api_key]
+    static_configs:
+      - targets: ["gameserver.example.com:3001"]
+        labels:
+          server: factoreco
+
+# Suggested alerts:
+#   up{job="eco"} == 0                                                      for 5m   server or endpoint down
+#   increase(eco_exporter_handler_errors_total[15m]) > 0                            the mod caught exceptions
+#   time() - eco_exporter_state_last_save_timestamp_seconds > 300                   counter state not being saved
+#   eco_exporter_events_queued > 10000                                              worker is falling behind
+#   eco_exporter_listener_attached == 0                                             kill switch is on

@@ -1,5 +1,7 @@
 bin/
 obj/
-publish/
-*.pdb
-eco-metrics-state.json
+*.metrics.json
+*.metrics.json.*
+.vs/
+*.user
+.claude/worktrees/

@@ -1,0 +1,717 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Store trades: prices, volumes and values per item, side, currency and player.",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "era"
+      ],
+      "title": "Era dashboards",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Currency per item over each trailing hour that had trades, carried forward until the next trade (up to 7 days).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 2,
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 16,
+        "x": 0,
+        "y": 0
+      },
+      "id": 73,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "topk(100, last_over_time((sum by (side, currency, item) (increase(eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[1h])) / sum by (side, currency, item) (increase(eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[1h])) > 0)[7d:5m]))",
+          "instant": false,
+          "legendFormat": "{{side}} {{item}} in {{currency}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Average price per item, last known (top 100)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Currency moved divided by items moved over the whole selected range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 2,
+          "noValue": "none in range",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 74,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "sum_over_time((clamp_min(sum by (side, currency, item) (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]) / sum_over_time((clamp_min(sum by (side, currency, item) (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]) > 0",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "{{side}} {{item}} in {{currency}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Average price in the selected range",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Each bar is one graph interval (5 minutes or more); the legend Total is the count over the whole selected range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 75,
+      "interval": "5m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "sum by (item, side) ((eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset $__interval or min_over_time(eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[$__interval])))) > 0",
+          "instant": false,
+          "legendFormat": "{{item}} {{side}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Volume of traded items",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Each bar is one graph interval (5 minutes or more); the legend Total is the count over the whole selected range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 19
+      },
+      "id": 76,
+      "interval": "5m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "sum by (item, currency, side) ((eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset $__interval or min_over_time(eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[$__interval])))) > 0",
+          "instant": false,
+          "legendFormat": "{{item}} {{side}} in {{currency}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Combined value of traded items",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Each bar is one graph interval (5 minutes or more); the legend Total is the count over the whole selected range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "id": 77,
+      "interval": "5m",
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "clamp_min(sum((eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset $__interval or min_over_time(eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[$__interval])))), 0)",
+          "instant": false,
+          "legendFormat": "trades",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Trades made",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "noValue": "none in range",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "id": 78,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "topk(30, sum_over_time((clamp_min(sum by (item, side) (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "{{item}} {{side}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Items traded in range (top 30)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "noValue": "none in range",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 79,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player, side) (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "{{player}} {{side}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Currency traded in range, by player",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "noValue": "none in range",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 80,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "{{player}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Trades in range, by player",
+      "type": "bargauge"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": [
+    "eco",
+    "era"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "cei0t2vzw2x34d"
+        },
+        "definition": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, side)",
+        "includeAll": true,
+        "label": "Side",
+        "multi": true,
+        "name": "side",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, side)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "cei0t2vzw2x34d"
+        },
+        "definition": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, item)",
+        "includeAll": true,
+        "label": "Item",
+        "multi": true,
+        "name": "item",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, item)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "cei0t2vzw2x34d"
+        },
+        "definition": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, currency)",
+        "includeAll": true,
+        "label": "Currency",
+        "multi": true,
+        "name": "currency",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, currency)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "cei0t2vzw2x34d"
+        },
+        "definition": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, player)",
+        "includeAll": true,
+        "label": "Player",
+        "multi": true,
+        "name": "player",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(eco_action_currency_trade_total{job=\"factoreco\"}, player)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Store Metrics | Era",
+  "uid": "eco-era-store",
+  "version": 0
+}

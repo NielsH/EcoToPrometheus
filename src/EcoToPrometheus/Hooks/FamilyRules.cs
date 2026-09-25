@@ -122,16 +122,22 @@ namespace EcoToPrometheus.Hooks
         public const string Title = "title", Stage = "stage", Part = "part", FirstTime = "first_time", Food = "food", Type = "type";
     }
 
-    /// <summary>Per-Type label strings, computed once so the per-event path does no substring work.</summary>
+    /// <summary>
+    /// Per-Type label strings, computed once so the per-event path does no substring work. A missing object (no tool in
+    /// hand, no species) becomes <c>none</c>: Prometheus treats an empty label value as an absent label, which makes the
+    /// series disappear from any grouping on that label and shows up as an unnamed "Value" row in Grafana.
+    /// </summary>
     static class TypeLabels
     {
+        public const string None = "none";
+
         static readonly ConcurrentDictionary<Type, string> items   = new();
         static readonly ConcurrentDictionary<Type, string> species = new();
         static readonly ConcurrentDictionary<Type, string> skills  = new();
 
-        public static string Item(Item? item)     => item == null ? string.Empty : items.GetOrAdd(item.GetType(), static t => MetricNames.TypeLabel(t.Name, "Item"));
-        public static string Species(Type? type)  => type == null ? string.Empty : species.GetOrAdd(type, static t => MetricNames.TypeLabel(t.Name, "Species"));
-        public static string Skill(Item? skill)   => skill == null ? string.Empty : skills.GetOrAdd(skill.GetType(), static t => MetricNames.TypeLabel(t.Name, "Skill"));
+        public static string Item(Item? item)     => item == null ? None : items.GetOrAdd(item.GetType(), static t => MetricNames.TypeLabel(t.Name, "Item"));
+        public static string Species(Type? type)  => type == null ? None : species.GetOrAdd(type, static t => MetricNames.TypeLabel(t.Name, "Species"));
+        public static string Skill(Item? skill)   => skill == null ? None : skills.GetOrAdd(skill.GetType(), static t => MetricNames.TypeLabel(t.Name, "Skill"));
     }
 
     /// <summary>Enum member names without the per-call reflection of <c>Enum.ToString()</c>.</summary>
@@ -190,7 +196,7 @@ namespace EcoToPrometheus.Hooks
         public static readonly IReadOnlyList<FamilyHelp> ValueHelp = new List<FamilyHelp>
         {
             new(Playtime,         MetricType.Counter, "Seconds a citizen was logged in, reported every 30 s."),
-            new(Calories,         MetricType.Counter, "Calories spent performing actions."),
+            new(Calories,         MetricType.Counter, "Calories spent performing actions, per player (calories are always burned by a citizen, so this companion ignores PlayerLabelFamilies)."),
             new(TradeItems,       MetricType.Counter, "Items exchanged at stores, from the acting citizen's side."),
             new(TradeCurrency,    MetricType.Counter, "Currency exchanged at stores, from the acting citizen's side."),
             new(MoneyTransferred, MetricType.Counter, "Money transferred, by TransferType. Overlaps with the dedicated tax/rent/wage families; do not add them together."),
@@ -547,7 +553,7 @@ namespace EcoToPrometheus.Hooks
                 return new[]
                 {
                     Inc(f, Cnt(a), new[] { L(Lbl.Species, Sp(a.Species)), L(Lbl.Tool, Tool(a.ToolUsed)) }, who),
-                    Inc(Calories, a.CaloriesToConsume, harvestAction, who),
+                    Inc(Calories, a.CaloriesToConsume, harvestAction, PlayerOnly(true, a.Citizen)),
                 };
             });
             var chopAction = ActionLabel(typeof(ChopTree));
@@ -557,7 +563,7 @@ namespace EcoToPrometheus.Hooks
                 return new[]
                 {
                     Inc(f, Cnt(a), new[] { L(Lbl.Species, Sp(a.Species)), L(Lbl.Tool, Tool(a.ToolUsed)) }, who),
-                    Inc(Calories, a.CaloriesToConsume, chopAction, who),
+                    Inc(Calories, a.CaloriesToConsume, chopAction, PlayerOnly(true, a.Citizen)),
                 };
             });
             Add<ChopStump>((a, p, f) => new[] { Inc(f,         Cnt(a), new[] { L(Lbl.Species, Sp(a.Species)) }, PlayerOnly(p, a.Citizen)) });
@@ -568,8 +574,8 @@ namespace EcoToPrometheus.Hooks
             Add<CreateWorkOrder>((a, p, f) =>
             {
                 var hasOrder = a.WorkOrder != null;
-                var item     = hasOrder ? It(a.CraftedItem) : string.Empty;
-                var table    = hasOrder ? It(a.WorldObjectItem) : string.Empty;
+                var item     = hasOrder ? It(a.CraftedItem) : TypeLabels.None;
+                var table    = hasOrder ? It(a.WorldObjectItem) : TypeLabels.None;
                 return new[]
                 {
                     Inc(f, Cnt(a), new[] { L(Lbl.Item, item), L(Lbl.Table, table) }, PlayerOnly(p, a.Citizen)),
@@ -593,8 +599,8 @@ namespace EcoToPrometheus.Hooks
             Add<LaborWorkOrderAction>((a, p, f) =>
             {
                 var hasOrder  = a.WorkOrder != null;
-                var specialty = hasOrder ? Sk(a.LaborSkill) : string.Empty;
-                var table     = hasOrder ? It(a.WorldObjectItem) : string.Empty;
+                var specialty = hasOrder ? Sk(a.LaborSkill) : TypeLabels.None;
+                var table     = hasOrder ? It(a.WorldObjectItem) : TypeLabels.None;
                 return new[]
                 {
                     Inc(f, Cnt(a), new[] { L(Lbl.Specialty, specialty), L(Lbl.Table, table) }, PlayerOnly(p, a.Citizen)),
@@ -613,7 +619,7 @@ namespace EcoToPrometheus.Hooks
                     return new[]
                     {
                         Inc(family, Cnt(a), new[] { L(Lbl.Tool, Tool(a.ToolUsed)) }, who),
-                        Inc(Calories, a.CaloriesToConsume, action, who),
+                        Inc(Calories, a.CaloriesToConsume, action, PlayerOnly(true, a.Citizen)),
                     };
                 });
             }
@@ -635,7 +641,7 @@ namespace EcoToPrometheus.Hooks
                 return new[]
                 {
                     Inc(f, Cnt(a), new[] { L(Lbl.Op, EnumLabel<ConstructedOrDeconstructed>.Of(a.ConstructedOrDeconstructed)), L(Lbl.Block, It(a.ItemUsed)) }, who),
-                    Inc(Calories, a.CaloriesToConsume, constructAction, who),
+                    Inc(Calories, a.CaloriesToConsume, constructAction, PlayerOnly(true, a.Citizen)),
                 };
             });
             var digAction = ActionLabel(typeof(DigOrMine));
@@ -645,7 +651,7 @@ namespace EcoToPrometheus.Hooks
                 return new[]
                 {
                     Inc(f, Cnt(a), new[] { L(Lbl.Block, It(a.ItemUsed)), L(Lbl.Tool, Tool(a.ToolUsed)) }, who),
-                    Inc(Calories, a.CaloriesToConsume, digAction, who),
+                    Inc(Calories, a.CaloriesToConsume, digAction, PlayerOnly(true, a.Citizen)),
                 };
             });
             Add<DropOrPickupBlock>((a, p, f) => new[]
@@ -790,8 +796,8 @@ namespace EcoToPrometheus.Hooks
         {
             object? v;
             try { v = label.Get(action); }
-            catch (Exception) { return string.Empty; }
-            if (v == null) return string.Empty;
+            catch (Exception) { return TypeLabels.None; }
+            if (v == null) return TypeLabels.None;
             if (label.IsEnum) return label.EnumNames.GetOrAdd(v, static o => o.ToString() ?? string.Empty);
             if (label.IsType) return TypeLabels.Species((Type)v);
             return v is Item item ? TypeLabels.Item(item) : string.Empty;

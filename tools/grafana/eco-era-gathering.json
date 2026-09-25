@@ -438,7 +438,7 @@
         "type": "prometheus",
         "uid": "cei0t2vzw2x34d"
       },
-      "description": "Each bar is one graph interval (5 minutes or more); the legend Total is the count over the whole selected range.",
+      "description": "Calories are always burned by a citizen; one row covers samples recorded before the per-player label was added on 2026-09-25. Each bar is one graph interval (5 minutes or more); the legend Total is the count over the whole selected range.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -459,7 +459,20 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "unattributed (data before 2026-09-25)"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -527,7 +540,20 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "none (no tool)"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,

@@ -13,4 +13,6 @@ Rewritten as an in-process Eco 0.14 server mod. The v1 external LiteDB poller is
 - API-key filter that also refuses an empty key and an unconfigured token; optional anonymous
   mode; gzip.
 - Admin chat command `/metrics status|reset|detach|attach`.
-- Unit tests for the Eco-free core (94 tests).
+- Per-player skill gauges: specialty levels and experience (Self Improvement included), stars,
+  XP towards the next star, and the XP modifier split into food and housing.
+- Unit tests for the Eco-free core (100 tests).

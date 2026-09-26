@@ -12,6 +12,7 @@ namespace EcoToPrometheus.Hooks
     using Eco.Gameplay.Objects;
     using Eco.Gameplay.Players;
     using Eco.Gameplay.Settlements;
+    using Eco.Gameplay.Skills;
     using Eco.Gameplay.Stats;
     using Eco.Gameplay.Systems;
     using Eco.Shared;
@@ -446,6 +447,90 @@ namespace EcoToPrometheus.Hooks
             var n = 0;
             foreach (var _ in ServiceHolder<IWorldObjectManager>.Obj.All) n++;
             GaugeUtil.Set(sink, "eco_world_objects", n);
+        }
+    }
+
+    // ---- per-player skills and XP ----------------------------------------------------------------------
+
+    /// <summary>
+    /// Every citizen's learned specialties (level, experience, experience needed for the next level), stars and XP,
+    /// and the XP modifier with its food and housing parts. Part of the Live group, sampled every SlowGaugeIntervalSeconds.
+    /// Families are cleared before each pass so a refunded specialty or a removed player disappears.
+    /// </summary>
+    public sealed class PlayersSource : IGaugeSource
+    {
+        const string SpecialtyLevel   = "eco_player_specialty_level";
+        const string SpecialtyXp      = "eco_player_specialty_experience";
+        const string SpecialtyXpNext  = "eco_player_specialty_experience_to_level";
+        const string StarsEarned      = "eco_player_stars_earned";
+        const string StarsAvailable   = "eco_player_stars_available";
+        const string Xp               = "eco_player_xp";
+        const string NextStarCost     = "eco_player_next_star_cost";
+        const string SkillRate        = "eco_player_skill_rate";
+        const string SkillRateBonus   = "eco_player_skill_rate_bonus";
+
+        static readonly string[] Families = { SpecialtyLevel, SpecialtyXp, SpecialtyXpNext, StarsEarned, StarsAvailable, Xp, NextStarCost, SkillRate, SkillRateBonus };
+        bool helpRegistered;
+
+        public string Group => GaugeGroups.Live;
+
+        public void Sample(IGaugeSink sink)
+        {
+            if (!this.helpRegistered)
+            {
+                this.helpRegistered = true;
+                GaugeUtil.Help(sink, SpecialtyLevel,  MetricType.Gauge, "Level of each learned specialty (Self Improvement included), per player.");
+                GaugeUtil.Help(sink, SpecialtyXp,     MetricType.Gauge, "Experience gathered towards the next level of the specialty, per player.");
+                GaugeUtil.Help(sink, SpecialtyXpNext, MetricType.Gauge, "Experience needed for the next level of the specialty, per player.");
+                GaugeUtil.Help(sink, StarsEarned,     MetricType.Gauge, "Stars earned over the player's lifetime.");
+                GaugeUtil.Help(sink, StarsAvailable,  MetricType.Gauge, "Stars not yet spent on specialties.");
+                GaugeUtil.Help(sink, Xp,              MetricType.Gauge, "Experience gathered towards the next star.");
+                GaugeUtil.Help(sink, NextStarCost,    MetricType.Gauge, "Experience needed for the next star.");
+                GaugeUtil.Help(sink, SkillRate,       MetricType.Gauge, "XP modifier (skill rate): experience gained per unit of time, food plus housing.");
+                GaugeUtil.Help(sink, SkillRateBonus,  MetricType.Gauge, "XP modifier parts by source: food (nutrition) and housing (residence value).");
+            }
+            foreach (var family in Families) sink.ClearFamily(family);
+
+            Exception? first = null;
+            foreach (var user in UserManager.Users)
+                GaugeUtil.Guard(ref first, () => SampleUser(sink, user));
+            GaugeUtil.Rethrow(first);
+        }
+
+        static void SampleUser(IGaugeSink sink, User user)
+        {
+            var name = user.Name;
+            if (string.IsNullOrEmpty(name)) return;
+            var player = new Label(Lbl.Player, name);
+            var only   = new[] { player };
+
+            var xp = user.UserXP;
+            if (xp != null)
+            {
+                sink.Set(StarsEarned,    only, xp.TotalStarsEarned);
+                sink.Set(StarsAvailable, only, xp.StarsAvailable);
+                sink.Set(Xp,             only, xp.XP);
+                sink.Set(NextStarCost,   only, xp.NextStarCost);
+            }
+
+            // Same two terms UserXP.SkillRate adds up, exported separately so dashboards can show the split.
+            double food    = user.Stomach?.NutrientSkillRate() ?? 0f;
+            double housing = user.ResidencyPropertyValue?.Value ?? 0f;
+            sink.Set(SkillRate,      only, food + housing);
+            sink.Set(SkillRateBonus, new[] { player, new Label(Lbl.Source, "food") },    food);
+            sink.Set(SkillRateBonus, new[] { player, new Label(Lbl.Source, "housing") }, housing);
+
+            var skills = user.Skillset?.Skills;
+            if (skills == null) return;
+            foreach (var skill in skills)
+            {
+                // Professions are root skills with MaxLevel 0; specialties and Self Improvement have levels.
+                if (skill == null || skill.Level <= 0 || skill.MaxLevel <= 0) continue;
+                var labels = new[] { player, new Label(Lbl.Specialty, MetricNames.TypeLabel(skill.GetType().Name, "Skill")) };
+                sink.Set(SpecialtyLevel,  labels, skill.Level);
+                sink.Set(SpecialtyXp,     labels, skill.Experience);
+                sink.Set(SpecialtyXpNext, labels, skill.ExperienceToLevel);
+            }
         }
     }
 }

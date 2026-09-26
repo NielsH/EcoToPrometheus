@@ -148,6 +148,32 @@ namespace EcoToPrometheus.Core
             return new List<string>(dropped);
         }
 
+        /// <summary>
+        /// Rewrites legacy keys: empty label values become <paramref name="emptyReplacement"/> (merging into an existing
+        /// series by addition), and counters that <paramref name="keep"/> rejects (given family and labels) are dropped.
+        /// Returns how many keys were renamed and dropped.
+        /// </summary>
+        public static (int Renamed, int Dropped) NormalizeLabels(StateFile state, string emptyReplacement, Func<string, Label[], bool> keep)
+        {
+            var renamed = 0; var dropped = 0;
+            var result  = new Dictionary<string, double>(state.Counters.Count, StringComparer.Ordinal);
+            foreach (var (key, value) in state.Counters)
+            {
+                string family; Label[] labels;
+                try { (family, labels) = SeriesKey.Parse(key); }
+                catch (FormatException) { result[key] = value; continue; }
+                var changed = false;
+                for (int i = 0; i < labels.Length; i++)
+                    if (labels[i].Value.Length == 0) { labels[i] = new Label(labels[i].Name, emptyReplacement); changed = true; }
+                if (!keep(family, labels)) { dropped++; continue; }
+                if (changed) { renamed++; Array.Sort(labels); }
+                var newKey = changed ? SeriesKey.Build(family, labels) : key;
+                result[newKey] = result.TryGetValue(newKey, out var existing) ? existing + value : value;
+            }
+            state.Counters = result;
+            return (renamed, dropped);
+        }
+
         static string Stamp(DateTime utc) => utc.ToString(StampFormat, CultureInfo.InvariantCulture);
 
         /// <summary>Appends <c>-2</c>, <c>-3</c>, ... before the extension when the candidate already exists (same-second collisions).</summary>

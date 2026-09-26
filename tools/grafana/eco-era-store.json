@@ -351,7 +351,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum((eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset $__interval or min_over_time(eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum((eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset $__interval or min_over_time(eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "trades",
           "range": true,
@@ -420,7 +420,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "topk(30, sum_over_time((clamp_min(sum by (item, side) (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(topk(30, sum_over_time((clamp_min(sum by (item, side) (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_items_total{kind=\"currency\", job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{item}} {{side}}",
@@ -490,7 +490,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player, side) (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player, side) (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_trade_currency_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} {{side}}",
@@ -560,7 +560,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} - (eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"} offset 5m or min_over_time(eco_action_currency_trade_total{job=\"factoreco\", side=~\"$side\", item=~\"$item\", currency=~\"$currency\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",

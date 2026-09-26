@@ -214,5 +214,27 @@ namespace EcoToPrometheus.Tests
             Assert.Equal(5, state.Counters["eco_action_chop_tree_total|player=Ann|species=Oak"]);
             Assert.Equal(42, state.Counters["eco_exporter_events_processed_total"]);
         }
+
+        [Fact]
+        public void NormalizeLabels_renames_empty_values_merges_and_drops()
+        {
+            var state = new StateFile();
+            state.Counters["eco_action_harvest_or_hunt_total|player=Ann|species=Oak|tool="]     = 5;   // legacy: no tool
+            state.Counters["eco_action_harvest_or_hunt_total|player=Ann|species=Oak|tool=none"] = 2;   // already migrated once
+            state.Counters["eco_calories_consumed_total|action=chop_tree|player=Ann"]           = 40;
+            state.Counters["eco_calories_consumed_total|action=plow_field"]                     = 99;  // legacy: no player
+            state.Counters["eco_exporter_scrapes_total"]                                        = 7;
+
+            var (renamed, dropped) = StateStore.NormalizeLabels(state, "none",
+                (family, labels) => family != "eco_calories_consumed_total" || System.Array.Exists(labels, l => l.Name == "player"));
+
+            Assert.Equal(1, renamed);
+            Assert.Equal(1, dropped);
+            Assert.Equal(3, state.Counters.Count);   // 5 in: one merged into an existing key, one dropped
+            Assert.Equal(7, state.Counters["eco_action_harvest_or_hunt_total|player=Ann|species=Oak|tool=none"]);
+            Assert.Equal(40, state.Counters["eco_calories_consumed_total|action=chop_tree|player=Ann"]);
+            Assert.False(state.Counters.ContainsKey("eco_calories_consumed_total|action=plow_field"));
+            Assert.Equal(7, state.Counters["eco_exporter_scrapes_total"]);
+        }
     }
 }

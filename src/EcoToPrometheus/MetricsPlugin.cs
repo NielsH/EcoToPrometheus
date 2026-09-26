@@ -343,6 +343,9 @@ namespace EcoToPrometheus
         /// <summary>How far the world clock may be behind the last state save before the save is treated as belonging to a previous world.</summary>
         public static readonly TimeSpan NewWorldRollbackTolerance = TimeSpan.FromHours(6);
 
+        /// <summary>Families whose series must carry a player label; legacy series without one are dropped on load.</summary>
+        static readonly HashSet<string> PlayerRequiredFamilies = new(StringComparer.Ordinal) { "eco_calories_consumed_total", "eco_playtime_seconds_total" };
+
         /// <summary>Counter families written by the worker and the plugin itself, kept across versions by name.</summary>
         static readonly string[] SelfCounterFamilies =
         {
@@ -400,6 +403,13 @@ namespace EcoToPrometheus
                 var dropped = StateStore.PruneUnknownFamilies(state, known.Contains);
                 if (dropped.Count > 0)
                     LogWarning($"[Metrics] dropped {dropped.Count} unknown counter families from the state file (renamed or removed metrics; gone from the next save): {string.Join(", ", dropped)}");
+
+                // Legacy keys from builds before 2026-09-25: empty label values (no tool in hand) become "none", and
+                // per-player companions that were recorded without a player cannot be attributed and are dropped.
+                var (renamed, unattributed) = StateStore.NormalizeLabels(state, MetricRegistry.EmptyLabelValue,
+                    (family, labels) => !PlayerRequiredFamilies.Contains(family) || Array.Exists(labels, l => l.Name == "player"));
+                if (renamed > 0 || unattributed > 0)
+                    LogWarning($"[Metrics] migrated the state file: {renamed} series with an empty label value now read \"{MetricRegistry.EmptyLabelValue}\", {unattributed} per-player series without a player dropped.");
 
                 this.Registry.ImportCounters(state.Counters);
                 this.stateLoadReason  = "ok";

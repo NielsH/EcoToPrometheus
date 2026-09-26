@@ -230,6 +230,7 @@ namespace EcoToPrometheus.Hooks
             new(DinnerCulture,    MetricType.Counter, "Culture awarded by finished dinner parties."),
             new(FoodEaten,        MetricType.Counter, "Food items eaten by citizens. [Eco event Stomach.GlobalFoodEatenEvent]"),
             new(FoodCalories,     MetricType.Counter, "Calories of food eaten by citizens. [Eco event Stomach.GlobalFoodEatenEvent]"),
+            new(SpecialtyXpHook.Family, MetricType.Counter, "Specialty experience granted, per player and specialty; divide its rate by eco_player_skill_rate for XP per rate point. [Eco event Skillset.OnExperienceGained]"),
         };
 
         // ---- build ------------------------------------------------------------------------------

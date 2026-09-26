@@ -77,7 +77,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (species) ((eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (species) ((eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "Hunt/harvest: {{species}}",
           "range": true,
@@ -88,7 +88,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (block) ((eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset $__interval or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (block) ((eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset $__interval or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "Mine: {{block}}",
           "range": true,
@@ -99,7 +99,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (species) ((eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (species) ((eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "Chop: {{species}}",
           "range": true,
@@ -110,7 +110,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (species) ((eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (species) ((eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "Plant: {{species}}",
           "range": true,
@@ -179,7 +179,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (species) (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (species) (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "Hunt/harvest: {{species}}",
@@ -191,7 +191,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (block) (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset 5m or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (block) (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset 5m or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "Mine: {{block}}",
@@ -203,7 +203,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (species) (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (species) (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "Chop: {{species}}",
@@ -215,7 +215,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (species) (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (species) (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "Plant: {{species}}",
@@ -284,7 +284,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (player, species) ((eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (player, species) ((eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "{{player}} hunt/harvest {{species}}",
           "range": true,
@@ -295,7 +295,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (player, block) ((eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset $__interval or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (player, block) ((eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset $__interval or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "{{player}} mine {{block}}",
           "range": true,
@@ -306,7 +306,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (player, species) ((eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (player, species) ((eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "{{player}} chop {{species}}",
           "range": true,
@@ -317,7 +317,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (player, species) ((eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0)",
+          "expr": "clamp_min(sum by (player, species) ((eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset $__interval or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[$__interval])))), 0) > 0",
           "instant": false,
           "legendFormat": "{{player}} plant {{species}}",
           "range": true,
@@ -386,7 +386,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_harvest_or_hunt_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} hunt/harvest",
@@ -398,7 +398,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset 5m or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} - (eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"} offset 5m or min_over_time(eco_action_dig_or_mine_total{job=\"factoreco\", player=~\"$player\", block=~\"$block\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} mine",
@@ -410,7 +410,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_chop_tree_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} chop",
@@ -422,7 +422,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))",
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player) (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} - (eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"} offset 5m or min_over_time(eco_action_plant_seeds_total{job=\"factoreco\", player=~\"$player\", species=~\"$species\"}[5m]))), 0))[$__range:5m]))) > 0",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} plant",
@@ -459,20 +459,7 @@
           },
           "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "unattributed (data before 2026-09-25)"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -504,7 +491,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (player) ((eco_calories_consumed_total{job=\"factoreco\", player=~\"$player\"} - (eco_calories_consumed_total{job=\"factoreco\", player=~\"$player\"} offset $__interval or min_over_time(eco_calories_consumed_total{job=\"factoreco\", player=~\"$player\"}[$__interval])))), 0)",
+          "expr": "clamp_min(label_replace(sum by (player) ((eco_calories_consumed_total{job=\"factoreco\", player=~\"$player\"} - (eco_calories_consumed_total{job=\"factoreco\", player=~\"$player\"} offset $__interval or min_over_time(eco_calories_consumed_total{job=\"factoreco\", player=~\"$player\"}[$__interval])))), \"player\", \"unattributed (data before 2026-09-25)\", \"player\", \"^$\"), 0) > 0",
           "instant": false,
           "legendFormat": "{{player}}",
           "range": true,
@@ -540,20 +527,7 @@
           },
           "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "none (no tool)"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -585,7 +559,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "clamp_min(sum by (tool) (({__name__=~\"eco_action_(chop_tree|dig_or_mine|harvest_or_hunt)_total\", job=\"factoreco\", player=~\"$player\"} - ({__name__=~\"eco_action_(chop_tree|dig_or_mine|harvest_or_hunt)_total\", job=\"factoreco\", player=~\"$player\"} offset $__interval or min_over_time({__name__=~\"eco_action_(chop_tree|dig_or_mine|harvest_or_hunt)_total\", job=\"factoreco\", player=~\"$player\"}[$__interval])))), 0)",
+          "expr": "clamp_min(label_replace(sum by (tool) (({__name__=~\"eco_action_(chop_tree|dig_or_mine|harvest_or_hunt)_total\", job=\"factoreco\", player=~\"$player\"} - ({__name__=~\"eco_action_(chop_tree|dig_or_mine|harvest_or_hunt)_total\", job=\"factoreco\", player=~\"$player\"} offset $__interval or min_over_time({__name__=~\"eco_action_(chop_tree|dig_or_mine|harvest_or_hunt)_total\", job=\"factoreco\", player=~\"$player\"}[$__interval])))), \"tool\", \"none (no tool)\", \"tool\", \"^$\"), 0) > 0",
           "instant": false,
           "legendFormat": "{{tool}}",
           "range": true,

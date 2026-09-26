@@ -228,10 +228,20 @@ namespace EcoToPrometheus.Core
             this.dirty = true;
         }
 
+        /// <summary>Value used for a label whose value would be empty. Prometheus treats an empty value as an absent label, which breaks grouping.</summary>
+        public const string EmptyLabelValue = "none";
+
         static Label[] Sorted(Label[] labels)
         {
-            if (labels.Length <= 1) return labels;
-            var copy = (Label[])labels.Clone();
+            var copy = labels;
+            for (int i = 0; i < labels.Length; i++)
+            {
+                if (labels[i].Value.Length != 0) continue;
+                if (ReferenceEquals(copy, labels)) copy = (Label[])labels.Clone();
+                copy[i] = new Label(labels[i].Name, EmptyLabelValue);
+            }
+            if (copy.Length <= 1) return copy;
+            if (ReferenceEquals(copy, labels)) copy = (Label[])labels.Clone();
             Array.Sort(copy);
             return copy;
         }

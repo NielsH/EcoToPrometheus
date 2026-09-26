@@ -247,5 +247,17 @@ namespace EcoToPrometheus.Tests
             Assert.Equal(0, r2.PendingBirths);
             Assert.Equal(7, r2.Publish(DateTime.UtcNow, 0).Families.Single().Series.Single().Value);
         }
+
+        [Fact]
+        public void EmptyLabelValues_become_none_for_counters_and_gauges()
+        {
+            var r = new MetricRegistry();
+            r.IncrementCounter("c_total", new[] { new Label("tool", ""), new Label("player", "Ann") }, 1);
+            r.SetGauge("g", new[] { new Label("kind", "") }, 3);
+            var snap = r.Publish(DateTime.UtcNow);
+            var c = snap.Families.Single(f => f.Name == "c_total").Series.Single();
+            Assert.Equal(new[] { new Label("player", "Ann"), new Label("tool", "none") }, c.Labels);
+            Assert.Equal("none", snap.Families.Single(f => f.Name == "g").Series.Single().Labels[0].Value);
+        }
     }
 }

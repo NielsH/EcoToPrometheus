@@ -91,7 +91,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_stars_earned{job=\"factoreco\", player=~\"$player\"})",
+          "expr": "sort_desc((eco_player_stars_earned{job=\"factoreco\", player=~\"$player\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -161,7 +161,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_stars_available{job=\"factoreco\", player=~\"$player\"})",
+          "expr": "sort_desc((eco_player_stars_available{job=\"factoreco\", player=~\"$player\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -233,7 +233,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_xp{job=\"factoreco\", player=~\"$player\"} / eco_player_next_star_cost{job=\"factoreco\", player=~\"$player\"})",
+          "expr": "sort_desc((eco_player_xp{job=\"factoreco\", player=~\"$player\"} / eco_player_next_star_cost{job=\"factoreco\", player=~\"$player\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -303,7 +303,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_skill_rate{job=\"factoreco\", player=~\"$player\"})",
+          "expr": "sort_desc((eco_player_skill_rate{job=\"factoreco\", player=~\"$player\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -386,7 +386,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_skill_rate_bonus{job=\"factoreco\", player=~\"$player\", source=\"food\"})",
+          "expr": "sort_desc((eco_player_skill_rate_bonus{job=\"factoreco\", player=~\"$player\", source=\"food\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -456,7 +456,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_skill_rate_bonus{job=\"factoreco\", player=~\"$player\", source=\"housing\"})",
+          "expr": "sort_desc((eco_player_skill_rate_bonus{job=\"factoreco\", player=~\"$player\", source=\"housing\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -677,7 +677,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_specialty_level{job=\"factoreco\", player=~\"$player\", specialty=\"SelfImprovement\"})",
+          "expr": "sort_desc((eco_player_specialty_level{job=\"factoreco\", player=~\"$player\", specialty=\"SelfImprovement\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -747,7 +747,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(count by (player) (eco_player_specialty_level{job=\"factoreco\", player=~\"$player\", specialty!=\"SelfImprovement\"}))",
+          "expr": "sort_desc((count by (player) (eco_player_specialty_level{job=\"factoreco\", player=~\"$player\", specialty!=\"SelfImprovement\"})) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}}",
@@ -891,7 +891,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_specialty_level{job=\"factoreco\", player=~\"$player\", specialty!=\"SelfImprovement\"})",
+          "expr": "sort_desc((eco_player_specialty_level{job=\"factoreco\", player=~\"$player\", specialty!=\"SelfImprovement\"}) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} \u00c2\u00b7 {{specialty}}",
@@ -1246,7 +1246,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player, specialty) (eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"} - (eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"} offset 5m or min_over_time(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))) > 0",
+          "expr": "sort_desc((sum_over_time((clamp_min(sum by (player, specialty) (eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"} - (eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"} offset 5m or min_over_time(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[5m]))), 0))[$__range:5m])) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} \u00c2\u00b7 {{specialty}}",
@@ -1316,7 +1316,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "(max by (specialty) (max_over_time(((sum by (player, specialty) (rate(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[1h])) * 86400) / on (player) group_left () eco_player_skill_rate{job=\"factoreco\", player=~\"$player\"})[$__range:5m]))) > 0",
+          "expr": "sort_desc((max by (specialty) (max_over_time(((sum by (player, specialty) (rate(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[1h])) * 86400) / on (player) group_left () eco_player_skill_rate{job=\"factoreco\", player=~\"$player\"})[$__range:5m]))) > 0)",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{specialty}}",

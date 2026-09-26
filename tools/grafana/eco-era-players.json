@@ -819,7 +819,7 @@
             "type": "prometheus",
             "uid": "cei0t2vzw2x34d"
           },
-          "expr": "sort_desc(eco_player_specialty_experience{job=\"factoreco\", player=~\"$player\"} / (eco_player_specialty_experience_to_level{job=\"factoreco\", player=~\"$player\"} > 0))",
+          "expr": "sort_desc((eco_player_specialty_experience{job=\"factoreco\", player=~\"$player\"} / (eco_player_specialty_experience_to_level{job=\"factoreco\", player=~\"$player\"} > 0)) and on (player, specialty) (eco_player_specialty_level{job=\"factoreco\", player=~\"$player\"} < 7))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "{{player}} \u00c2\u00b7 {{specialty}}",

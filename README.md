@@ -56,7 +56,9 @@ Naming: `eco_action_<snake_case>_total` for every GameAction (`ChopTree` becomes
 `eco_action_chop_tree_total`), curated value counters such as `eco_trade_currency_total`,
 `eco_playtime_seconds_total` and `eco_calories_consumed_total`, gauges such as
 `eco_players_online`, `eco_species_population{species,kind}`, `eco_climate_co2_ppm`,
-`eco_citizens`, `eco_gdp`, and `eco_exporter_*` self-metrics. Every family carries HELP and
+`eco_citizens`, `eco_gdp`, per-player skill gauges (`eco_player_specialty_level{player,specialty}`,
+`eco_player_stars_earned`, `eco_player_skill_rate` with its food and housing parts in
+`eco_player_skill_rate_bonus{source}`), and `eco_exporter_*` self-metrics. Every family carries HELP and
 TYPE, so the endpoint documents itself:
 
 ```bash

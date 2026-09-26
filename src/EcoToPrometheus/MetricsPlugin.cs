@@ -221,6 +221,7 @@ namespace EcoToPrometheus
             {
                 this.Worker.AddGaugeSource(new LiveSource(() => this.uptime.Elapsed.TotalSeconds), tick);
                 this.Worker.AddGaugeSource(new SlowSource(), slow);
+                this.Worker.AddGaugeSource(new PlayersSource(), slow);
                 this.Worker.AddGaugeSource(new WorldObjectsSource(), objects);
             }
         }

@@ -42,6 +42,12 @@ namespace Eco.Mods.MetricsRig
             if (all || what == "craft")   Fire(() => new ItemCraftedAction { Citizen = user, ItemUsed = Item.Get<HewnLogItem>() });
             if (all || what == "trade")   Fire(() => new CurrencyTrade     { Citizen = user, ItemUsed = Item.Get<WheatItem>(), NumberOfItems = 10f, BoughtOrSold = BoughtOrSold.Buying, Currency = CurrencyManager.Currencies.FirstOrDefault(), CurrencyAmount = 25.5f, Buyer = user, Seller = user, ShopOwner = user });
             if (all || what == "play")    Fire(() => new Play              { Citizen = user, SecondsPassed = 30f });
+            if (what == "xp")             // grants SkillRate x 50 specialty XP to Self Improvement per repetition (rig S=25: level 1->2 at 625)
+            {
+                for (var i = 0; i < count; i++) user.Skillset.AddExperience(typeof(SelfImprovementSkill), 50f, Localizer.DoStr("metricsrig"));
+                chatClient.MsgLoc($"[metricsrig] granted {count} x (skill rate {user.UserXP.SkillRate:F0} x 50) XP to {user.Name}'s Self Improvement (now level {user.Skillset.GetSkill(typeof(SelfImprovementSkill))?.Level}, exp {user.Skillset.GetSkill(typeof(SelfImprovementSkill))?.Experience:F0})");
+                return;
+            }
             if (all || what == "nostats")
             {
                 Fire(() => new ChopTree   { Citizen = user, Species = typeof(Oak.OakSpecies), ToolUsed = Item.Get<IronAxeItem>(), Felled = false }); // IConditionalStatistics declines

@@ -1037,6 +1037,295 @@
       ],
       "title": "Stars earned over time",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 64
+      },
+      "id": 98,
+      "panels": [],
+      "title": "Specialty XP income (for tuning SpecialtyExperiencePerLevelSquared)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Trailing-hour rate scaled to a day. This is what a specialty's level cost (Tier \u00c3\u2014 (level \u00c3\u2014 S)\u00c2\u00b2) is paid with.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 65
+      },
+      "id": 99,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "sum by (player, specialty) (rate(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[1h])) * 86400",
+          "instant": false,
+          "legendFormat": "{{player}} \u00c2\u00b7 {{specialty}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Specialty XP gained per day",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "Specialty XP per day divided by the player's skill rate: the throughput independent of food and housing bonuses. Around 300 for the most active players on 2026-09-26; the number that sizes S.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 65
+      },
+      "id": 100,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "(sum by (player, specialty) (rate(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[1h])) * 86400) / on (player) group_left () eco_player_skill_rate{job=\"factoreco\", player=~\"$player\"}",
+          "instant": false,
+          "legendFormat": "{{player}} \u00c2\u00b7 {{specialty}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "XP per skill-rate point per day",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "noValue": "none in range",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 75
+      },
+      "id": 101,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "(sort_desc(sum_over_time((clamp_min(sum by (player, specialty) (eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"} - (eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"} offset 5m or min_over_time(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[5m]))), 0))[$__range:5m]))) > 0",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "{{player}} \u00c2\u00b7 {{specialty}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Specialty XP gained in range",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cei0t2vzw2x34d"
+      },
+      "description": "The pace a dedicated player sustains: the highest trailing-hour XP per skill-rate point any player reached in the range, per specialty. This is the number that sizes SpecialtyExperiencePerLevelSquared; dabblers do not pull it down.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "noValue": "none in range",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 75
+      },
+      "id": 102,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cei0t2vzw2x34d"
+          },
+          "expr": "(max by (specialty) (max_over_time(((sum by (player, specialty) (rate(eco_player_specialty_experience_gained_total{job=\"factoreco\", player=~\"$player\"}[1h])) * 86400) / on (player) group_left () eco_player_skill_rate{job=\"factoreco\", player=~\"$player\"})[$__range:5m]))) > 0",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "{{specialty}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Peak XP per rate point per day, by specialty (best hour of any player in range)",
+      "type": "bargauge"
     }
   ],
   "refresh": "1m",

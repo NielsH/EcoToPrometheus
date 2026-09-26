@@ -58,7 +58,8 @@ Naming: `eco_action_<snake_case>_total` for every GameAction (`ChopTree` becomes
 `eco_players_online`, `eco_species_population{species,kind}`, `eco_climate_co2_ppm`,
 `eco_citizens`, `eco_gdp`, per-player skill gauges (`eco_player_specialty_level{player,specialty}`,
 `eco_player_stars_earned`, `eco_player_skill_rate` with its food and housing parts in
-`eco_player_skill_rate_bonus{source}`), and `eco_exporter_*` self-metrics. Every family carries HELP and
+`eco_player_skill_rate_bonus{source}`, and the counter `eco_player_specialty_experience_gained_total` whose
+rate divided by the skill rate gives XP per rate point), and `eco_exporter_*` self-metrics. Every family carries HELP and
 TYPE, so the endpoint documents itself:
 
 ```bash

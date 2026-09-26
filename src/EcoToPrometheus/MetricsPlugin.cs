@@ -54,6 +54,7 @@ namespace EcoToPrometheus
         public MetricRegistry Registry { get; } = new();
         public MetricsWorker  Worker   { get; }
         public ActionListener Listener { get; }
+        public SpecialtyXpHook XpHook   { get; }
         public FoodEatenHook  FoodHook { get; }
 
         /// <summary>True once the plugin is enabled, the worker has published at least once, and the exposition writer exists.</summary>
@@ -80,6 +81,7 @@ namespace EcoToPrometheus
             this.Worker   = new MetricsWorker(this.Registry, this.resolver, options, LogWarning, LogError);
             this.Listener = new ActionListener(this.Worker);
             this.FoodHook = new FoodEatenHook(this.Worker);
+            this.XpHook   = new SpecialtyXpHook(this.Worker);
             this.AttachHandler   = this.Attach;
             this.DetachHandler   = this.Detach;
             this.OnCountersReset = () => this.SaveState("reset");
@@ -181,6 +183,7 @@ namespace EcoToPrometheus
                 if (this.listenerAttached) return;
                 ActionUtil.AddListener(this.Listener);
                 this.FoodHook.Attach();
+                this.XpHook.Attach();
                 this.simStats.Subscribe();
                 this.SetListenerAttached(true);
             }
@@ -194,6 +197,7 @@ namespace EcoToPrometheus
                 if (!this.listenerAttached) return;
                 ActionUtil.RemoveListener(this.Listener);
                 this.FoodHook.Detach();
+                this.XpHook.Detach();
                 this.SetListenerAttached(false);
             }
         }
